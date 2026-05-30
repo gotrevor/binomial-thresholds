@@ -10,6 +10,7 @@ swap plus a cardinality bound. Feeds the per-`j` `R_lower` engine (steps 3b–3d
 -/
 import Mathlib
 import BinomialThresholds.Basic
+import BinomialThresholds.Aggregation
 
 open Finset
 
@@ -66,5 +67,30 @@ theorem j_decomposition {n Y J : ℕ} :
       ≤ ((Y / p - 1 : ℕ) : ℝ) * (((p - 1 - n % p : ℕ) : ℝ) * Real.log p) :=
         mul_le_mul_of_nonneg_right hcard hfnn
     _ = ((p - 1 - n % p : ℕ) : ℝ) * ((Y / p - 1 : ℕ) : ℝ) * Real.log p := by ring
+
+/-- **Per-`j` `Rⱼ - Tⱼ` bound (step 3b).** Applying `R_lower` to a prime set `P` and
+peeling the `-Tⱼ` (using the cast identity `(p-1-n%p) = (p-n%p) - 1` for primes, valid
+since `p - n%p ≥ 1`): with `T = ∑_{p∈P} log p`,
+`M·T - log(n+M)·∑_{A<M} A - T ≤ ∑_{p∈P} (aₚ-1)·log p`. With `P = Pⱼ` this is the paper's
+`∑_{p∈Pⱼ}(aₚ-1)log p ≥ Rⱼ - Tⱼ` made explicit; the Chebyshev lower bound on `T` (step 3c)
+and the `Mⱼ` choice (step 3d) turn the RHS into the `(log n)³/j²` engine. -/
+theorem sum_aminus1_log_ge (P : Finset ℕ) (n M : ℕ) (hn : 0 < n) (hP : ∀ p ∈ P, p.Prime) :
+    (M : ℝ) * (∑ p ∈ P, Real.log p)
+        - Real.log ((n : ℝ) + M) * (∑ A ∈ Finset.range M, (A : ℝ))
+        - (∑ p ∈ P, Real.log p)
+      ≤ ∑ p ∈ P, ((p - 1 - n % p : ℕ) : ℝ) * Real.log p := by
+  -- the `(aₚ-1)` summand splits as `aₚ·log p - log p` (cast identity, prime ⟹ aₚ ≥ 1).
+  have hcast : ∑ p ∈ P, ((p - 1 - n % p : ℕ) : ℝ) * Real.log p
+      = (∑ p ∈ P, ((p - n % p : ℕ) : ℝ) * Real.log p) - (∑ p ∈ P, Real.log p) := by
+    rw [← Finset.sum_sub_distrib]
+    refine Finset.sum_congr rfl fun p hp => ?_
+    have hpp := hP p hp
+    have hmod : n % p < p := Nat.mod_lt n hpp.pos
+    have hge : 1 ≤ p - n % p := by omega
+    have hsplit : ((p - 1 - n % p : ℕ) : ℝ) = ((p - n % p : ℕ) : ℝ) - 1 := by
+      rw [Nat.sub_right_comm, Nat.cast_sub hge, Nat.cast_one]
+    rw [hsplit]; ring
+  rw [hcast]
+  linarith [R_lower P n M hn hP]
 
 end BinomialThresholds
