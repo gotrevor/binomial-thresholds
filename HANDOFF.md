@@ -124,14 +124,29 @@ this project was chosen to avoid. Sharp constants = optional hard-mode only.
    give, for `Y ≤ n`:
    `∑_{p≤Y} (p−1−n%p)(⌊Y/p⌋−1) · log p ≤ ∑_{k=1}^Y log(u(n,k))`.
    **All non-asymptotic work for the upper bound is now complete.**
-3. ⏳ **Pigeonhole / averaging — THE REMAINING CHUNK** (pure analysis from here).
-   Lower-bound the step-2 LHS `∑_{p≤Y}(aₚ−1)(⌊Y/p⌋−1)log p` and show its average over
-   `Y = ⌊C(log n)²⌋` exceeds `2 log n`, so some `k ≤ Y` has `u(n,k) > n²`, giving `f n ≤ Y`.
-   The `aₚ = p − n%p` aggregation goes through the `Pⱼ = {p ≤ Y/j}` / `Mⱼ` decomposition
-   and `sum_log_le_of_a_le` (already proven). **Chebyshev** `θ` bounds enter here
-   (`theta_eq_sum_primesLE_log`, `theta_le_log4_mul_x`) fixing the relaxed `C ≈ 16` (see
-   the verified scope section). Heaviest sub-tasks: `o(1)` bookkeeping, the `∑_j 1/j²`
-   tail, choosing `J`, and connecting `u(n,k) > n²` back to `f n ≤ k` via `Nat.sInf_le`.
+3. ⏳ **Step 3 — averaging + the analytic inequality.** Two halves; the first is DONE:
+   - ✅ **Averaging reduction** (`Upper.f_le_of_aux_sum_gt`): the whole upper bound now
+     reduces to ONE inequality — `2·Y·log n < ∑_{p≤Y}(p−1−n%p)(⌊Y/p⌋−1)log p` ⟹ `f n ≤ Y`
+     (for `Y ≤ n`). Connect-to-`f` via `Nat.sInf_le` is done.
+   - ✅ **`Rⱼ` engine** (`Aggregation.lean`): `sum_amul_log_ge` (layer cake) + `R_lower`
+     give, per prime set `P` and `0 < n`:
+     `M·T − log(n+M)·∑_{A<M}A ≤ ∑_{p∈P}(p−n%p)log p`, where `T = ∑_{p∈P}log p`.
+   - ⏳ **What's left to prove `hbig`** (the heaviest analytic work, ~Chebyshev + asymptotics):
+     (a) **j-decomposition**: `∑_{p≤Y}(aₚ−1)(⌊Y/p⌋−1)log p ≥ ∑_{j=2}^J (Rⱼ−Tⱼ)` with
+         `Pⱼ={p≤Y/j}`, `Rⱼ=∑_{Pⱼ}aₚlog p`, `Tⱼ=∑_{Pⱼ}log p`. Uses `⌊Y/p⌋−1 ≥ #{2≤j≤J : p∈Pⱼ}`.
+         Combinatorial, no analysis. Good next concrete target.
+     (b) Plug `R_lower` per `j` with `Mⱼ=⌊Y/(j log n)⌋`.
+     (c) **Chebyshev** lower bound `Tⱼ ≥ (log2)(Y/j) − err` (`Chebyshev.theta_*`); this is
+         where the relaxed `C ≈ 16` is fixed.
+     (d) **Asymptotics**: `Y=⌊C(log n)²⌋`, leading `(log n)³` terms, `∑_j 1/j²` tail, choose
+         `J`, `o(1)`/`∀ᶠ n` bookkeeping. The real grind.
+
+## Status snapshot (session 2 end)
+
+Non-asymptotic proof: **100% done**. Averaging reduction + `Rⱼ` engine: **done**. Only
+the j-decomposition + Chebyshev + asymptotic bookkeeping (3a–3d) remain for the upper
+bound. Lower bound (`f_ge_log_frequently`) untouched. 6 axiom-clean modules, 2 `sorry`s
+(the two headline theorems in `Basic`). ~13 commits this session, all green on `master`.
 
 `f_ge_log_frequently`: witness `n = (∏_{p≤K} p^{⌊log_p K⌋+1}) − 1`; for `k≤K`,
 `n mod pᵃ ≥ k mod pᵃ` ⟹ `vₚ(C(n,k))=0` for all `p≤K` ⟹ `u(n,k)=1 ≤ n²`, so
