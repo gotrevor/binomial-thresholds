@@ -105,20 +105,31 @@ theorem j_decomposition {n Y J : ℕ} :
 
 ## 4. After 3a — the rest of `hbig` (heavier, analytic)
 
-- **3b — per-j `Rⱼ` bound.** `∑_{p∈Pⱼ}(aₚ−1)log p = Rⱼ − Tⱼ` where
-  `Rⱼ = ∑_{Pⱼ} aₚ log p`, `Tⱼ = ∑_{Pⱼ} log p`. Apply `R_lower Pⱼ n Mⱼ` with
-  `Mⱼ = ⌊Y/(j·log n)⌋` (a ℕ — careful, `log n` is real; you likely want
-  `Mⱼ = ⌊Y / (j * ⌈log n⌉)⌋` or carry `Mⱼ` as a real cutoff and re-derive. Decide the
-  cleanest encoding early). Gives `Rⱼ ≥ Mⱼ·Tⱼ − log(n+Mⱼ)·∑_{A<Mⱼ}A`.
+- **3b — per-j `Rⱼ` bound. ✅ DONE** (`Decomposition.sum_aminus1_log_ge`, commit `c043788`).
+  For any prime set `P`: `M·T − log(n+M)·∑_{A<M}A − T ≤ ∑_{p∈P}(aₚ−1)log p`, via `R_lower`
+  plus the prime cast identity `(p−1−n%p) = (p−n%p)−1`. Left `M` general — the `Mⱼ` choice
+  (`⌊Y/(j·log n)⌋` encoding) is deferred to 3d, where the real/ℕ floor mess lives.
 
-- **3c — Chebyshev on `Tⱼ`.** Need a LOWER bound `Tⱼ = ∑_{p≤Y/j} log p = θ(Y/j) ≥ (log2)(Y/j) − o`.
-  mathlib has `Chebyshev.theta_eq_sum_primesLE_log` (`θ x = ∑_{p≤x} log p`) and the upper
-  `theta_le_log4_mul_x`. **The lower bound `θ(x) ≥ (log2)·x − …` comes from
-  `Chebyshev.two_pow_le_mul_lcmUpto`** (`2ⁿ ≤ (n+1)·lcmUpto n`) — chase how mathlib's
-  Chebyshev file derives the lower θ bound (grep `theta` + `log 2` / `lcmUpto` in
-  `Mathlib/NumberTheory/Chebyshev.lean`). ⚠️ reconcile `primesLE` (mathlib θ) vs
-  `primesBelow` (our `Pⱼ`): `primesBelow (m+1)` = primes `≤ m` = `primesLE m`. There is
-  almost certainly a bridge lemma; if not, prove a one-liner.
+- **3c — Chebyshev LOWER bound on `Tⱼ`. ⚠️ BIGGER THAN ADVERTISED — the handoff was wrong.**
+  Need `Tⱼ = θ(Y/j) ≥ (log2)(Y/j) − err`. **mathlib v4.29.1 ships NO Chebyshev lower bound.**
+  The `Chebyshev.two_pow_le_mul_lcmUpto` lemma cited in older notes **does not exist** (no
+  `lcmUpto` anywhere); `Chebyshev.theta_eq_sum_primesLE_log` also absent. Only *upper* bounds
+  ship: `theta_le_log4_mul_x`, `psi_le_const_mul_self`, `primorial_le_four_pow`. **You must
+  BUILD the lower bound.** The atoms ARE all present (verified this session), so it's feasible,
+  just substantial (~the heaviest single piece of the project). The chain:
+  1. **(B, easy)** `four_pow_le_two_mul_self_mul_centralBinom n (0<n) : 4^n ≤ 2n·centralBinom n`.
+     Take logs ⟹ `2n·log2 − log(2n) ≤ log(centralBinom n)` (`log 4 = 2 log 2`, `log_pow`).
+  2. **(A, the hard part)** `log(centralBinom n) ≤ ψ(2n)`. centralBinom's prime factorization
+     `∏_{p} p^{vₚ}` has `p^{vₚ} ≤ 2n` (`pow_factorization_choose_le`, n→2n k→n) and support
+     `p ≤ 2n` (`le_two_mul_of_factorization_centralBinom_pos`). So
+     `log centralBinom = ∑_p vₚ log p = ∑_p ∑_{j=1}^{vₚ} Λ(pʲ) ≤ ∑_{m≤2n} Λ(m) = ψ(2n)`
+     (reindex the injective `(p,j)↦pʲ` into `[1,2n]`; complement von-Mangoldt terms ≥ 0).
+     This is the fiddly reindex — `Finset.sum_image`/`sum_biUnion`, `vonMangoldt_apply`.
+     ψ def + `psi_eq_sum_Icc` in `Mathlib/NumberTheory/Chebyshev.lean`.
+  3. **θ from ψ**: `θ(x) ≥ ψ(x) − 2√x·log x` via `abs_psi_sub_theta_le_sqrt_mul_log (1≤x)`.
+     Net: `θ(x) ≥ (log2)·x − log x − 2√x log x` for `x = 2n` (the `√x log x` is `o(x)`).
+  ⚠️ still reconcile `primesLE` (θ's index) vs `primesBelow (m+1)` (our `Pⱼ`) — a `≤ m` ↔
+     `< m+1` rename, likely a one-liner once you pin θ's actual summation form here.
 
 - **3d — asymptotic assembly.** Set `Y = ⌊C(log n)²⌋`, `C ≈ 16` (the verified relaxed
   constant — see `HANDOFF.md` scope section for the exact `C > 2/((log2−½)(π²/6−1))`
