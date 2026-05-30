@@ -3,4 +3,5 @@ import BinomialThresholds.Legendre
 import BinomialThresholds.CrucialObs
 import BinomialThresholds.BlockCount
 import BinomialThresholds.Aggregation
+import BinomialThresholds.Decomposition
 import BinomialThresholds.Upper
