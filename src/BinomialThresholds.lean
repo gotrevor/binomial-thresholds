@@ -1,2 +1,3 @@
 import BinomialThresholds.Basic
 import BinomialThresholds.Legendre
+import BinomialThresholds.CrucialObs
