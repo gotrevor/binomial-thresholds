@@ -7,3 +7,4 @@ import BinomialThresholds.Decomposition
 import BinomialThresholds.ChebyshevLower
 import BinomialThresholds.Asymptotic
 import BinomialThresholds.Upper
+import BinomialThresholds.Lower
