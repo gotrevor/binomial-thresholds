@@ -144,14 +144,14 @@ theorem sum_lower_le_aux {n Y J : ℕ} (Mf : ℕ → ℕ) (hn : 0 < n) :
   exact per_j_bound hn (by omega)
 
 set_option maxHeartbeats 3000000 in
-/-- **Upper bound (constant-relaxed Theorem 2.1): `f n = O((log n)²)`.** Concretely
-`∃ C > 0, ∀ᶠ n, f n ≤ C·(log n)²` with `C = 200`. Assembles steps 3a–3d: with
-`Y = ⌊200(log n)²⌋`, the single `j=2` term of `sum_lower_le_aux` (cutoff
-`M = ⌊Y/(2 log n)⌋`) exceeds `2·Y·log n` (via the `θ ≥ 0.6x` Chebyshev lower bound and
-`poly_heart`), so `Upper.f_le_of_aux_sum_gt` gives `f n ≤ Y ≤ 200(log n)²`. -/
-theorem f_le_polylog :
-    ∃ C : ℝ, 0 < C ∧ ∀ᶠ n : ℕ in Filter.atTop, (f n : ℝ) ≤ C * (Real.log n) ^ 2 := by
-  refine ⟨200, by norm_num, ?_⟩
+/-- **Upper bound, witness form (constant-relaxed Theorem 2.1).** For large `n` there is an
+explicit `k ≤ 200(log n)²` with `n² < u n k`. Assembles steps 3a–3d: with `Y = ⌊200(log n)²⌋`,
+the single `j=2` term of `sum_lower_le_aux` (cutoff `M = ⌊Y/(2 log n)⌋`) exceeds `2·Y·log n`
+(via the `θ ≥ 0.6x` Chebyshev lower bound and `poly_heart`), so `Upper.exists_threshold_le`
+produces a `k ≤ Y ≤ 200(log n)²` in the threshold set. Both `f_le_polylog` (the `O((log n)²)`
+bound) and `threshold_nonempty` (needed by the lower bound) are corollaries. -/
+theorem eventually_exists_threshold :
+    ∀ᶠ n : ℕ in Filter.atTop, ∃ k : ℕ, (k : ℝ) ≤ 200 * (Real.log n) ^ 2 ∧ n ^ 2 < u n k := by
   obtain ⟨x₀, hx₀⟩ := Filter.eventually_atTop.mp eventually_theta_ge
   have hlogtend : Filter.Tendsto (fun n : ℕ => Real.log n) Filter.atTop Filter.atTop :=
     Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
@@ -256,8 +256,27 @@ theorem f_le_polylog :
     simp only [Finset.Icc_self, Finset.sum_singleton] at hagg
     rw [← hHdef] at hagg
     exact lt_of_lt_of_le hfinal hagg
-  have hfn : f n ≤ Y := f_le_of_aux_sum_gt hYn (by rw [← hLdef]; exact hbig)
-  calc (f n : ℝ) ≤ (Y : ℝ) := by exact_mod_cast hfn
-    _ ≤ 200 * L ^ 2 := hYhi
+  obtain ⟨k, hkY, hkey⟩ := exists_threshold_le hYn (by rw [← hLdef]; exact hbig)
+  exact ⟨k, le_trans (by exact_mod_cast hkY) hYhi, hkey⟩
+
+/-- **Upper bound (constant-relaxed Theorem 2.1): `f n = O((log n)²)`.** Concretely
+`∃ C > 0, ∀ᶠ n, f n ≤ C·(log n)²` with `C = 200`. The witness `k` of
+`eventually_exists_threshold` lies in the threshold set, so `f n = sInf … ≤ k ≤ 200(log n)²`. -/
+theorem f_le_polylog :
+    ∃ C : ℝ, 0 < C ∧ ∀ᶠ n : ℕ in Filter.atTop, (f n : ℝ) ≤ C * (Real.log n) ^ 2 :=
+  ⟨200, by norm_num, eventually_exists_threshold.mono fun n h => by
+    obtain ⟨k, hk1, hk2⟩ := h
+    have hfk : f n ≤ k := Nat.sInf_le hk2
+    exact le_trans (by exact_mod_cast hfk) hk1⟩
+
+/-- **The threshold set is eventually nonempty.** Corollary of `eventually_exists_threshold`:
+for large `n` some `k` satisfies `n² < u n k`, so `{k | n² < u n k} ≠ ∅` and `f n` is a genuine
+minimum (not the `sInf ∅ = 0` default). The lower bound `f_ge_log_frequently` needs this to
+turn "no `k ≤ K` is in the set" into `K < f n`. -/
+theorem threshold_nonempty :
+    ∀ᶠ n : ℕ in Filter.atTop, {k | n ^ 2 < u n k}.Nonempty :=
+  eventually_exists_threshold.mono fun n h => by
+    obtain ⟨k, _, hk2⟩ := h
+    exact ⟨k, hk2⟩
 
 end BinomialThresholds

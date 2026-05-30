@@ -140,15 +140,15 @@ theorem sum_aux_le_sum_log_u {n Y : ℕ} (hYn : Y ≤ n) :
     _ ≤ ((#{k ∈ Finset.Icc 1 Y | p ≤ k ∧ n % p < k % p} : ℕ) : ℝ) * Real.log p :=
         mul_le_mul_of_nonneg_right (by exact_mod_cast card_Icc_ge hpp.pos) hlog
 
-/-- **Averaging + connect to `f`.** If the step-2 lower sum exceeds `2 Y log n`, then
-some `k ∈ [1,Y]` has `log(u n k) > 2 log n = log(n²)`, i.e. `u(n,k) > n²`, so `f n ≤ Y`.
-This reduces the whole upper bound to the single analytic inequality `hbig` (which the
-Chebyshev step supplies). Needs only `Y ≤ n`. -/
-theorem f_le_of_aux_sum_gt {n Y : ℕ} (hYn : Y ≤ n)
+/-- **Averaging (witness form).** If the step-2 lower sum exceeds `2 Y log n`, then some
+`k ∈ [1,Y]` has `log(u n k) > 2 log n = log(n²)`, i.e. `n² < u n k`. This exhibits an
+*explicit element* of the threshold set `{k | n² < u n k}` with `k ≤ Y`, so the set is
+nonempty (the lower bound needs this) and `f n ≤ Y` (the upper bound). Needs only `Y ≤ n`. -/
+theorem exists_threshold_le {n Y : ℕ} (hYn : Y ≤ n)
     (hbig : (2 : ℝ) * Y * Real.log n
       < ∑ p ∈ Nat.primesBelow (Y + 1),
           ((p - 1 - n % p : ℕ) : ℝ) * ((Y / p - 1 : ℕ) : ℝ) * Real.log p) :
-    f n ≤ Y := by
+    ∃ k, k ≤ Y ∧ n ^ 2 < u n k := by
   have h2 : (2 : ℝ) * Y * Real.log n < ∑ k ∈ Finset.Icc 1 Y, Real.log (u n k) :=
     lt_of_lt_of_le hbig (sum_aux_le_sum_log_u hYn)
   -- averaging: some k beats the mean `2 log n`.
@@ -171,6 +171,17 @@ theorem f_le_of_aux_sum_gt {n Y : ℕ} (hYn : Y ≤ n)
     push Not at hc
     exact absurd (Real.log_le_log (by exact_mod_cast hu_pos) (by exact_mod_cast hc))
       (not_le.mpr hlog)
-  exact le_trans (Nat.sInf_le hkey) hk.2
+  exact ⟨k, hk.2, hkey⟩
+
+/-- **Averaging + connect to `f`.** If the step-2 lower sum exceeds `2 Y log n`, then
+`f n ≤ Y`: the witness `k ≤ Y` from `exists_threshold_le` lies in the threshold set, so
+`f n = sInf {k | n² < u n k} ≤ k ≤ Y`. Needs only `Y ≤ n`. -/
+theorem f_le_of_aux_sum_gt {n Y : ℕ} (hYn : Y ≤ n)
+    (hbig : (2 : ℝ) * Y * Real.log n
+      < ∑ p ∈ Nat.primesBelow (Y + 1),
+          ((p - 1 - n % p : ℕ) : ℝ) * ((Y / p - 1 : ℕ) : ℝ) * Real.log p) :
+    f n ≤ Y := by
+  obtain ⟨k, hkY, hkey⟩ := exists_threshold_le hYn hbig
+  exact le_trans (Nat.sInf_le hkey) hkY
 
 end BinomialThresholds
