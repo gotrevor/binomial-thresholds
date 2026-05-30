@@ -1,196 +1,60 @@
-# HANDOFF — binomial-thresholds formalization
+# Binomial Thresholds — master handoff
 
-**Repo**: `~/src/binomial-thresholds/` · **Started**: 2026-05-30 · **mathlib**: v4.29.1
-**Build**: green. **`f_le_polylog` (the UPPER bound) is fully PROVEN and axiom-clean** as of
-2026-05-30 (see `Asymptotic.lean`). `Basic` now holds only the defs + ONE remaining `sorry`:
-`f_ge_log_frequently` (the lower bound, untouched). Git on `master`, commit when green
-(no remote yet). The upper-bound saga (steps 1–3d) is detailed in `HANDOFF-STEP3.md`.
+**Status (2026-05-30)**: §2 of arXiv:2603.29961 — **COMPLETE. Both bounds proven &
+axiom-clean. Zero sorries.**
 
-## ✅ Upper bound DONE — what it took
+## What this is
 
-`f_le_polylog : ∃ C>0, ∀ᶠ n, f n ≤ C(log n)²` (with `C = 200`). The headline finding:
-**mathlib v4.29.1 has no Chebyshev θ/ψ lower bound**, so `ChebyshevLower.lean` builds one
-from central binomials (`log C(2n,n) ≤ ψ(2n)` via the von Mangoldt divisor identity, then
-`θ(x) ≥ 0.6x` eventually). The asymptotic core (`Asymptotic.lean`) uses the **`J=2`
-single-term** simplification (no `∑1/j²` tail), clears denominators by `4L²` into the
-polynomial `poly_heart`, and threads `∀ᶠ n` via floor bounds + `clear_value` to tame the
-nested-floor whnf blowups (needs `maxHeartbeats 3000000`).
+Constant-relaxed formalization of Erdős #684 (small prime factors of `C(n,k)`):
+- `f_le_polylog : ∃ C>0, ∀ᶠ n, f n ≤ C·(log n)²` — **PROVEN, axiom-clean.** (`C = 200`)
+- `f_ge_log_frequently : ∃ c>0, ∃ᶠ n, c·log n ≤ f n` — **PROVEN, axiom-clean.**
+  (`c = 1/(2 log 4 + 4)`)
 
-## Module map (all axiom-clean unless noted)
+`#print axioms` for both → `[propext, Classical.choice, Quot.sound]` (the three standard
+mathlib axioms; nothing custom). Full build green: `lake build BinomialThresholds` → 8259 jobs.
 
-- `Legendre.lean` — `vₚ(C(n,k)) ≥ 1[n%p<k%p]` and the `=0` no-carry companion.
-- `CrucialObs.lean` — `prod_primes_dvd_prod_shift` (primes with `aₚ≤A` divide `∏_{m≤A}(n+m)`)
-  and its log form `sum_log_le_of_a_le : ∑_{S} log p ≤ A·log(n+A)`.
-- `BlockCount.lean` — `card_filter_mod_gt : (p-1-t)·(Y/p) ≤ #{k<Y : k%p>t}` (residue
-  equidistribution via `Nat.count_modEq_card`). Sharper than the paper's `⌊Y/p⌋-1`.
-- `Upper.lean` — steps 1–2 + averaging. `sum_aux_le_sum_log_u`, and the reduction
-  `f_le_of_aux_sum_gt : 2Y·log n < (hbig sum) → f n ≤ Y`.
-- `Aggregation.lean` — the layer-cake `R_lower` engine (energy `∑ aₚ log p` lower bound).
-- `Decomposition.lean` — steps 3a/3b: `j_decomposition` (Fubini), `sum_aminus1_log_ge`.
-- `ChebyshevLower.lean` — **the built-from-scratch Chebyshev lower bound** (step 3c):
-  `log_centralBinom_le_psi`, `theta_lower`, and the reusable `theta_ge (x≥2) : θ x ≥
-  x·log2 − o(x)`. mathlib has no such bound; this supplies it, axiom-clean.
-- `Asymptotic.lean` — step 3d + **`f_le_polylog` (PROVEN)**. Bridge `T_eq_theta`,
-  `per_j_bound`, `sum_lower_le_aux`, the smallness lemmas, `poly_heart`, final assembly.
-- `Basic.lean` — objects `u`, `f`; ONE remaining `sorry` (`f_ge_log_frequently`).
+## Module map
 
-## TL;DR state
+| File | Role | State |
+|------|------|-------|
+| `Basic.lean` | `u`, `f` defs | ✅ |
+| `Legendre.lean` | `v_p(C(n,k))` carry lemmas (both directions) | ✅ |
+| `CrucialObs.lean` | step-1 crucial observation | ✅ |
+| `BlockCount.lean` | step-2 block counting | ✅ |
+| `Aggregation.lean` | step-2 aggregation | ✅ |
+| `Decomposition.lean` | step-3a j-decomposition | ✅ |
+| `ChebyshevLower.lean` | θ/ψ lower bound (built, mathlib lacks it) | ✅ |
+| `Asymptotic.lean` | step-3d assembly → `eventually_exists_threshold`, `f_le_polylog`, `threshold_nonempty` | ✅ |
+| `Upper.lean` | averaging → `exists_threshold_le`, `f_le_of_aux_sum_gt` | ✅ |
+| `Lower.lean` | `M_K` witness → `f_ge_log_frequently` | ✅ |
 
-`src/BinomialThresholds/Basic.lean`: the faithful objects `u`, `f` and two
-**constant-relaxed** theorem statements, both still `sorry`.
+## How the lower bound works (`Lower.lean`)
 
-`src/BinomialThresholds/Legendre.lean`: ✅ **the atomic building block, fully proven**
-(Opus session 2, 2026-05-30). Two lemmas, both axiom-clean (`propext, Classical.choice,
-Quot.sound` only — no `sorryAx`):
-- `one_le_factorization_choose` : `p.Prime → k ≤ n → n % p < k % p → 1 ≤ vₚ(C(n,k))`
-  (the carry indicator lower bound the **upper** bound sums over `k`).
-- `factorization_choose_eq_zero` : `p.Prime → k ≤ n → (∀ i, k % pⁱ ≤ n % pⁱ) → vₚ(C(n,k)) = 0`
-  (the carry-free pattern the **lower** bound's witness family is built to hit).
-- shared helper `m_le_mod_add_mod_iff (hm : 0 < m) (hkn : k ≤ n) :`
-  `m ≤ k%m + (n-k)%m ↔ n%m < k%m` — the base-`m` single-digit carry ⟺ borrow fact.
-  (⚠️ the iff is FALSE at `m = 0`; needs `0 < m`. Built both lemmas off `factorization_choose`
-  from `Mathlib/Data/Nat/Choose/Factorization.lean`, NOT `dvd_choose` — `dvd_choose` needs
-  BOTH `k<p` and `n-k<p`, too restrictive for general `k`.)
+Witness `n = M_K − 1` with `M_K = ∏_{p≤K, prime} p^{⌊log_p K⌋+1}`.
+- `digit_le`: for prime `p≤K`, `k≤K`, every `i`: `k % pⁱ ≤ (M_K−1) % pⁱ`. Split at
+  `a=⌊log_p K⌋+1`: for `i≤a`, `pⁱ ∣ M_K` ⟹ `(M_K−1)%pⁱ = pⁱ−1` maximal; for `i>a`,
+  `k < pᵃ ≤ (M_K−1)%pⁱ`.
+- `u_MK_eq_one`: the carry-free pattern ⟹ `v_p(C(n,k))=0` (`Legendre.factorization_choose_eq_zero`)
+  ⟹ `u(M_K−1, k)=1` for all `k≤K`.
+- `log_LK_le_psi`: `∑_{p≤K} ⌊log_p K⌋·log p ≤ ψ(K)` — the `O(K)` (not `O(K log K)`)
+  cancellation, via the same von-Mangoldt-divisor-subsum trick as `log_centralBinom_le_psi`.
+- `log_MK_le`: `log M_K = ψ(K)+θ(K) ≤ (2 log4 + 4)·K` via mathlib's `psi_le_const_mul_self` +
+  `theta_le_log4_mul_x`.
+- `f_ge_log_frequently`: `K < f(M_K−1)` because no `k≤K` is in the (nonempty, via
+  `threshold_nonempty`) threshold set; combine with `log n ≤ C·K`.
 
-mathlib pinned to v4.29.1 (Trevor's everywhere-else version) so the 1.6G local cache is
-reused — `lake exe cache get` was an instant hit (8229 oleans, no download).
+**Refactor that enabled it** (commit `5e9eb6f`): the upper-bound averaging argument was split
+so the witness `k` (with `n²<u n k`) is *exposed* (`Upper.exists_threshold_le`,
+`Asymptotic.eventually_exists_threshold`), not just consumed. The lower bound needs
+`threshold_nonempty` — else `f n = sInf ∅ = 0` and the bound is vacuous.
 
-## What & why
+## Key decisions
 
-Formalizing **§2 of Alexeev–Putterman–Sawhney–Sellke–Valiant, "Short proofs in
-combinatorics and number theory"** ([arXiv:2603.29961](https://arxiv.org/abs/2603.29961),
-Apr 2026 — the OpenAI "short proofs" series; proofs found by an internal model).
-Answers the order-of-growth side of an Erdős question on small prime factors of
-`C(n,k)` ([erdosproblems.com/684](https://www.erdosproblems.com/684)).
+- **Constant-relaxed, not sharp.** Sharp constants (`24/(π²−6)`, `1/2`) need PNT
+  (`θ(x) ~ x`); we use only elementary Chebyshev bounds. Fully unconditional on mathlib.
+- **`ChebyshevLower` built in-repo**: mathlib v4.29.1 ships θ/ψ *upper* bounds but no lower.
 
-**Chosen as the deliberate anti-`sum-product` pick.** sum-product is "too hard" not
-because the math is deep but because the proof bottoms out in machinery mathlib
-lacks (Martinet class-field towers, Blichfeldt/Hensley/Brauer–Siegel) → permanently
-conditional on axioms. This was selected by triaging the OpenAI short-proofs papers
-I & II for "self-contained, every dependency already in mathlib." (Paper I §3
-Burr–Erdős basis #741 was the other gem but DeepMind's prover fully formalized it
-Apr 2026; §4 + all of paper II route through Maynard–Tao / Hayman / Pollack /
-elliptic-curve machinery = same wall, rejected.)
+## Push status
 
-## The objects (Basic.lean)
-
-```
-u n k = ∏_{p ∈ primesBelow (k+1)} p ^ (Nat.choose n k).factorization p   -- ∏_{p≤k} p^{vₚ(C(n,k))}
-f n   = sInf { k | n^2 < u n k }                                          -- min{ k : u(n,k) > n² }
-```
-Sanity (by hand): `u 10 3 = 2³·3 = 24` since `C(10,3)=120=2³·3·5`, primes ≤ 3 = {2,3}.
-NOT vacuous. `f` is `noncomputable` (sInf); `sInf ∅ = 0`, so `f_le_polylog`'s content
-also certifies the witness set is eventually nonempty.
-
-## ⚠️ THE SCOPE DECISION (read before touching constants)
-
-The paper's **sharp** constants — `f(n) ≤ (24/(π²−6)+o(1))(log n)² ≤ 6.20219(log n)²`
-upper, `f(nⱼ) ≥ (1/2+o(1))log nⱼ` lower — come from `θ(x) ~ x`, i.e. the **Prime
-Number Theorem asymptotic**, which is **NOT in mathlib** (that is precisely what the
-PrimeNumberTheorem+ project supplies; PNT+ is on v4.29.0 → importing it forks the
-cache and drags a research project in as a dep).
-
-So we deliberately target the **constant-relaxed** statements and stay unconditional:
-- `f_le_polylog`        : `∃ C>0, ∀ᶠ n, (f n) ≤ C·(log n)²`
-- `f_ge_log_frequently` : `∃ c>0, ∃ᶠ n, c·log n ≤ (f n)`
-
-### ✅ Scope decision VERIFIED on paper (Opus session 2)
-
-Worked the paper's upper-bound argument through with Chebyshev `θ(x) ≍ x` substituted
-for the PNT `θ(x) ~ x`, to confirm the relaxed statement actually survives (it's not
-enough that the *statement* is weaker — the *proof* has to go through on what mathlib has):
-
-- Paper's `R_j ≥ M_j·T_j − ½M_j²(log n + log M_j)`. With `M_j = Y/(j log n)`,
-  `Y = C(log n)²`, both terms are `Θ((log n)³/j²)`. PNT gives `T_j ~ Y/j` (coeff 1) ⟹
-  `R_j ≥ (C²/2j²)(log n)³`. **Chebyshev** gives only `T_j ≥ (log 2)·Y/j` ⟹
-  `R_j ≥ (C²/j²)(log 2 − ½)(log n)³`. The `log 2 − ½ ≈ 0.193 > 0` is what saves it —
-  Chebyshev's lower constant `log 2 ≈ 0.693` clears the `½` from the `∑A ≈ M_j²/2`.
-- Averaging needs `C·(log 2 − ½)·∑_{j≥2} j⁻² > 2`, i.e.
-  `C > 2 / ((log 2 − ½)(π²/6 − 1)) ≈ 2 / (0.193·0.645) ≈ 16.06`.
-- The subtracted `∑ T_j = O(Y log log n) = o(Y log n)` (Chebyshev upper `θ ≤ log 4·x`), lower order.
-
-**So the relaxed upper bound holds with `C ≈ 16` (vs the sharp `6.20219`), zero axioms.**
-The lower bound similarly survives: `log M_K = ψ(K) ∈ [c₁K, c₂K]` by Chebyshev ⟹
-`f(M_K−1) > K ≥ c·log(M_K−1)` for some `c > 0`. The HANDOFF's central bet is sound.
-
-These need only the **elementary Chebyshev bounds**, which mathlib v4.29.1 ships in
-`Mathlib.NumberTheory.Chebyshev` (verified present this session):
-| lemma | role |
-|-------|------|
-| `Chebyshev.theta_eq_sum_primesLE_log` | `θ x = ∑_{p≤x} log p` — **the paper's `Tⱼ` sum** |
-| `Chebyshev.theta_le_log4_mul_x` | `θ x ≤ log 4 · x` — relaxed upper (replaces θ~x) |
-| `Chebyshev.two_pow_le_mul_lcmUpto` | `2^n ≤ (n+1)·lcmUpto n` — lower-bound engine |
-| `Chebyshev.psi_le_const_mul_self`, `Chebyshev.abs_psi_sub_theta_le_sqrt_mul_log` | ψ≍x, ψ≈θ |
-
-Same honest move as sum-product's `card_boxAdd_le` (constant relaxed `(2X+1)ᵈ→(2X+2)ᵈ`).
-**Do not** "improve" to the sharp constants — that reintroduces the exact PNT wall
-this project was chosen to avoid. Sharp constants = optional hard-mode only.
-
-## Proof spine (next session: do the upper bound first)
-
-`f_le_polylog` is the meatier one and carries the paper's cleverness.
-
-1. ✅ **Legendre building block — DONE** (`Legendre.lean`, axiom-clean). Both the
-   `≥ 1` lower bound (`one_le_factorization_choose`) and the `= 0` no-carry companion
-   (`factorization_choose_eq_zero`) are proven off mathlib's `Nat.factorization_choose`
-   (carries = `#{i ∈ Ico 1 b | pⁱ ≤ k%pⁱ + (n−k)%pⁱ}`). The `1_{n mod p < k mod p}`
-   indicator is the `i=1` term; lower bound = "that term is in the set", zero = "no
-   term is". Shared digit-carry iff is `m_le_mod_add_mod_iff`.
-2. ✅ **Sum over k — DONE** (`Upper.sum_aux_le_sum_log_u`, axiom-clean). The Fubini
-   swap (`sum_card_log_le_sum_log_u`) + the count bound (`card_Icc_ge`, which subtracts
-   the `[0,p)` boundary block from `card_filter_mod_gt` to land the paper's `(Y/p−1)`)
-   give, for `Y ≤ n`:
-   `∑_{p≤Y} (p−1−n%p)(⌊Y/p⌋−1) · log p ≤ ∑_{k=1}^Y log(u(n,k))`.
-   **All non-asymptotic work for the upper bound is now complete.**
-3. ⏳ **Step 3 — averaging + the analytic inequality.** Two halves; the first is DONE:
-   - ✅ **Averaging reduction** (`Upper.f_le_of_aux_sum_gt`): the whole upper bound now
-     reduces to ONE inequality — `2·Y·log n < ∑_{p≤Y}(p−1−n%p)(⌊Y/p⌋−1)log p` ⟹ `f n ≤ Y`
-     (for `Y ≤ n`). Connect-to-`f` via `Nat.sInf_le` is done.
-   - ✅ **`Rⱼ` engine** (`Aggregation.lean`): `sum_amul_log_ge` (layer cake) + `R_lower`
-     give, per prime set `P` and `0 < n`:
-     `M·T − log(n+M)·∑_{A<M}A ≤ ∑_{p∈P}(p−n%p)log p`, where `T = ∑_{p∈P}log p`.
-   - ⏳ **What's left to prove `hbig`** (the heaviest analytic work, ~Chebyshev + asymptotics):
-     (a) **j-decomposition**: `∑_{p≤Y}(aₚ−1)(⌊Y/p⌋−1)log p ≥ ∑_{j=2}^J (Rⱼ−Tⱼ)` with
-         `Pⱼ={p≤Y/j}`, `Rⱼ=∑_{Pⱼ}aₚlog p`, `Tⱼ=∑_{Pⱼ}log p`. Uses `⌊Y/p⌋−1 ≥ #{2≤j≤J : p∈Pⱼ}`.
-         Combinatorial, no analysis. Good next concrete target.
-     (b) Plug `R_lower` per `j` with `Mⱼ=⌊Y/(j log n)⌋`.
-     (c) **Chebyshev** lower bound `Tⱼ ≥ (log2)(Y/j) − err` (`Chebyshev.theta_*`); this is
-         where the relaxed `C ≈ 16` is fixed.
-     (d) **Asymptotics**: `Y=⌊C(log n)²⌋`, leading `(log n)³` terms, `∑_j 1/j²` tail, choose
-         `J`, `o(1)`/`∀ᶠ n` bookkeeping. The real grind.
-
-## Status snapshot (session 2 end)
-
-Non-asymptotic proof: **100% done**. Averaging reduction + `Rⱼ` engine: **done**. Only
-the j-decomposition + Chebyshev + asymptotic bookkeeping (3a–3d) remain for the upper
-bound. Lower bound (`f_ge_log_frequently`) untouched. 6 axiom-clean modules, 2 `sorry`s
-(the two headline theorems in `Basic`). ~13 commits this session, all green on `master`.
-
-`f_ge_log_frequently`: witness `n = (∏_{p≤K} p^{⌊log_p K⌋+1}) − 1`; for `k≤K`,
-`n mod pᵃ ≥ k mod pᵃ` ⟹ `vₚ(C(n,k))=0` for all `p≤K` ⟹ `u(n,k)=1 ≤ n²`, so
-`f n > K`. `log n = log(M_K) = ψ(K)+θ(K) = Θ(K)` via Chebyshev ⟹ `f n ≥ c log n`.
-
-## Build / cache gotchas (carried from sum-product)
-
-- `lake build` with **no target** prints "0 jobs" even if nothing compiled. Always
-  build the explicit target `lake build BinomialThresholds` and watch the job count
-  (~8250 here). `lakefile.toml` uses package-level `srcDir = "src"`.
-- A `sorry` of a *false/vacuous* statement is worse than nothing — sanity-check every
-  statement says what the paper means (the `u 10 3 = 24` check above).
-- `~/src/mathlib4` is a local checkout (currently v4.30.0-rc2, close enough to grep
-  lemma names; confirm signatures against v4.29.1 if a build fails).
-- Use `trash`, not `rm` (hook blocks `rm`). Git repo initialized (baseline
-  `2c6200a`, branch `master`, identity `Trevor Morris <gotrevor@gmail.com>`).
-  Commit green builds reflexively — see KB `feedback_commit_when_green.md`. No
-  remote yet; pushing anywhere public is a separate, confirm-first decision.
-
-## Recording it when proven (two trackers, NEITHER hosts the proof)
-
-Both cloned locally this session. The proof lives in **this repo**; trackers just point.
-- **formal-conjectures** (`~/src/formal-conjectures`, DeepMind statement DB): #684 has
-  no file yet → PR a new `FormalConjectures/ErdosProblems/684.lean` with the faithful
-  statement, tag `@[category research open]` (684 asks for the *exact order*; bounds
-  don't resolve it), and once proven add `@[formal_proof using lean4 at "<repo URL>"]`.
-  Theorem body stays `sorry` there by design (see their #728.lean for the pattern).
-- **teorth/erdosproblems** (`~/src/erdosproblems`, website DB `data/problems.yaml`):
-  PR flips `formalized: no → yes` (it's currently `no`); `status` stays `open`.
+Local commits on `master`, **not pushed** (box has no GitHub egress). Host-side `git push`.
+Relevant commits: `5e9eb6f` (refactor), `517546f` (lower bound complete).
