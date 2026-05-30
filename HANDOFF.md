@@ -118,18 +118,20 @@ this project was chosen to avoid. Sharp constants = optional hard-mode only.
    (carries = `#{i ∈ Ico 1 b | pⁱ ≤ k%pⁱ + (n−k)%pⁱ}`). The `1_{n mod p < k mod p}`
    indicator is the `i=1` term; lower bound = "that term is in the set", zero = "no
    term is". Shared digit-carry iff is `m_le_mod_add_mod_iff`.
-2. **Sum over k** — ingredients ✅ DONE, assembly ⏳ NEXT. The three pieces exist:
-   `indicator_sum_le_log_u` (per-k, `Upper`), `card_filter_mod_gt` (`BlockCount`),
-   `sum_log_le_of_a_le` (`CrucialObs`). What remains is the **double-sum swap** (Fubini):
-   `∑_{k=1}^Y log(u(n,k)) ≥ ∑_{k} ∑_{p≤k} 1[n%p<k%p] log p = ∑_{p≤Y} log p · #{k∈[p,Y] : n%p<k%p}`,
-   then plug `card_filter_mod_gt` to get `≥ ∑_{p≤Y}(aₚ−1)(Y/p)log p` (minus the bounded
-   `k<p` correction). ⚠️ swap gotcha: `card_filter_mod_gt` counts `k∈[0,Y)` but the inner
-   sum is `p≤k≤Y`; the `k<p` terms are few (`< p ≤ Y`) and droppable since `aₚ−1 ≥ 0`.
-3. **Pigeonhole / averaging** ⏳ — with `Y = ⌊C(log n)²⌋`, average `∑log u / Y > 2log n`,
-   so some `k ≤ Y` has `u(n,k) > n²`, giving `f n ≤ Y`. This is where the **Chebyshev**
-   `θ` bounds enter (`theta_eq_sum_primesLE_log`, `theta_le_log4_mul_x`) and the relaxed
-   `C ≈ 16` is fixed (see the verified scope-decision section above). Heaviest remaining
-   chunk: the `o(1)` bookkeeping, the `∑_{j} 1/j²` tail, and choosing `J`.
+2. ✅ **Sum over k — DONE** (`Upper.sum_aux_le_sum_log_u`, axiom-clean). The Fubini
+   swap (`sum_card_log_le_sum_log_u`) + the count bound (`card_Icc_ge`, which subtracts
+   the `[0,p)` boundary block from `card_filter_mod_gt` to land the paper's `(Y/p−1)`)
+   give, for `Y ≤ n`:
+   `∑_{p≤Y} (p−1−n%p)(⌊Y/p⌋−1) · log p ≤ ∑_{k=1}^Y log(u(n,k))`.
+   **All non-asymptotic work for the upper bound is now complete.**
+3. ⏳ **Pigeonhole / averaging — THE REMAINING CHUNK** (pure analysis from here).
+   Lower-bound the step-2 LHS `∑_{p≤Y}(aₚ−1)(⌊Y/p⌋−1)log p` and show its average over
+   `Y = ⌊C(log n)²⌋` exceeds `2 log n`, so some `k ≤ Y` has `u(n,k) > n²`, giving `f n ≤ Y`.
+   The `aₚ = p − n%p` aggregation goes through the `Pⱼ = {p ≤ Y/j}` / `Mⱼ` decomposition
+   and `sum_log_le_of_a_le` (already proven). **Chebyshev** `θ` bounds enter here
+   (`theta_eq_sum_primesLE_log`, `theta_le_log4_mul_x`) fixing the relaxed `C ≈ 16` (see
+   the verified scope section). Heaviest sub-tasks: `o(1)` bookkeeping, the `∑_j 1/j²`
+   tail, choosing `J`, and connecting `u(n,k) > n²` back to `f n ≤ k` via `Nat.sInf_le`.
 
 `f_ge_log_frequently`: witness `n = (∏_{p≤K} p^{⌊log_p K⌋+1}) − 1`; for `k≤K`,
 `n mod pᵃ ≥ k mod pᵃ` ⟹ `vₚ(C(n,k))=0` for all `p≤K` ⟹ `u(n,k)=1 ≤ n²`, so
