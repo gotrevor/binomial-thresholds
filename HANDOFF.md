@@ -123,8 +123,10 @@ this project was chosen to avoid. Sharp constants = optional hard-mode only.
   statement says what the paper means (the `u 10 3 = 24` check above).
 - `~/src/mathlib4` is a local checkout (currently v4.30.0-rc2, close enough to grep
   lemma names; confirm signatures against v4.29.1 if a build fails).
-- Use `trash`, not `rm` (hook blocks `rm`). This repo is not yet a git repo —
-  Trevor to decide on `git init` / first commit (Ren held off per "commit when asked").
+- Use `trash`, not `rm` (hook blocks `rm`). Git repo initialized (baseline
+  `2c6200a`, branch `master`, identity `Trevor Morris <gotrevor@gmail.com>`).
+  Commit green builds reflexively — see KB `feedback_commit_when_green.md`. No
+  remote yet; pushing anywhere public is a separate, confirm-first decision.
 
 ## Recording it when proven (two trackers, NEITHER hosts the proof)
 
