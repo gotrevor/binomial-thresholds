@@ -1,9 +1,20 @@
 # HANDOFF — binomial-thresholds formalization
 
 **Repo**: `~/src/binomial-thresholds/` · **Started**: 2026-05-30 · **mathlib**: v4.29.1
-**Build**: green. `Basic` (2 headline `sorry`s — the two theorems) + four axiom-clean
-support modules: `Legendre`, `CrucialObs`, `BlockCount`, `Upper`. Git on `master`,
-commit when green (no remote yet).
+**Build**: green. **`f_le_polylog` (the UPPER bound) is fully PROVEN and axiom-clean** as of
+2026-05-30 (see `Asymptotic.lean`). `Basic` now holds only the defs + ONE remaining `sorry`:
+`f_ge_log_frequently` (the lower bound, untouched). Git on `master`, commit when green
+(no remote yet). The upper-bound saga (steps 1–3d) is detailed in `HANDOFF-STEP3.md`.
+
+## ✅ Upper bound DONE — what it took
+
+`f_le_polylog : ∃ C>0, ∀ᶠ n, f n ≤ C(log n)²` (with `C = 200`). The headline finding:
+**mathlib v4.29.1 has no Chebyshev θ/ψ lower bound**, so `ChebyshevLower.lean` builds one
+from central binomials (`log C(2n,n) ≤ ψ(2n)` via the von Mangoldt divisor identity, then
+`θ(x) ≥ 0.6x` eventually). The asymptotic core (`Asymptotic.lean`) uses the **`J=2`
+single-term** simplification (no `∑1/j²` tail), clears denominators by `4L²` into the
+polynomial `poly_heart`, and threads `∀ᶠ n` via floor bounds + `clear_value` to tame the
+nested-floor whnf blowups (needs `maxHeartbeats 3000000`).
 
 ## Module map (all axiom-clean unless noted)
 
@@ -12,9 +23,16 @@ commit when green (no remote yet).
   and its log form `sum_log_le_of_a_le : ∑_{S} log p ≤ A·log(n+A)`.
 - `BlockCount.lean` — `card_filter_mod_gt : (p-1-t)·(Y/p) ≤ #{k<Y : k%p>t}` (residue
   equidistribution via `Nat.count_modEq_card`). Sharper than the paper's `⌊Y/p⌋-1`.
-- `Upper.lean` — assembly in progress. Has `log_u_eq` (unfold `log(u n k)`) and
-  `indicator_sum_le_log_u (k≤n) : ∑_{p≤k, n%p<k%p} log p ≤ log(u n k)`.
-- `Basic.lean` — objects `u`, `f`; the two `sorry` headline theorems.
+- `Upper.lean` — steps 1–2 + averaging. `sum_aux_le_sum_log_u`, and the reduction
+  `f_le_of_aux_sum_gt : 2Y·log n < (hbig sum) → f n ≤ Y`.
+- `Aggregation.lean` — the layer-cake `R_lower` engine (energy `∑ aₚ log p` lower bound).
+- `Decomposition.lean` — steps 3a/3b: `j_decomposition` (Fubini), `sum_aminus1_log_ge`.
+- `ChebyshevLower.lean` — **the built-from-scratch Chebyshev lower bound** (step 3c):
+  `log_centralBinom_le_psi`, `theta_lower`, and the reusable `theta_ge (x≥2) : θ x ≥
+  x·log2 − o(x)`. mathlib has no such bound; this supplies it, axiom-clean.
+- `Asymptotic.lean` — step 3d + **`f_le_polylog` (PROVEN)**. Bridge `T_eq_theta`,
+  `per_j_bound`, `sum_lower_le_aux`, the smallness lemmas, `poly_heart`, final assembly.
+- `Basic.lean` — objects `u`, `f`; ONE remaining `sorry` (`f_ge_log_frequently`).
 
 ## TL;DR state
 
