@@ -50,4 +50,20 @@ theorem per_j_bound {n Y j M : ℕ} (hn : 0 < n) (hj : 0 < j) :
   have h := sum_aminus1_log_ge ((Nat.primesBelow (Y + 1)).filter (fun p => p * j ≤ Y)) n M hn hP
   rwa [T_eq_theta hj] at h
 
+/-- **Aggregated lower bound (step 3d).** Summing `per_j_bound` over `j ∈ [2,J]` (with any
+per-`j` cutoff `Mⱼ = Mf j`) and chaining through the `j_decomposition` (3a), the explicit
+θ/log sum bounds the `hbig` summand of `Upper.f_le_of_aux_sum_gt` from below. This reduces
+the entire upper bound to a pure inequality `2·Y·log n < (this explicit sum)` — no primes,
+no `f`, just θ and `log`. The remaining asymptotic grind chooses `Mf`, `Y`, `J`. -/
+theorem sum_lower_le_aux {n Y J : ℕ} (Mf : ℕ → ℕ) (hn : 0 < n) :
+    ∑ j ∈ Finset.Icc 2 J,
+        ((Mf j : ℝ) * Chebyshev.theta ((Y / j : ℕ) : ℝ)
+          - Real.log ((n : ℝ) + Mf j) * (∑ A ∈ Finset.range (Mf j), (A : ℝ))
+          - Chebyshev.theta ((Y / j : ℕ) : ℝ))
+      ≤ ∑ p ∈ Nat.primesBelow (Y + 1),
+          ((p - 1 - n % p : ℕ) : ℝ) * ((Y / p - 1 : ℕ) : ℝ) * Real.log p := by
+  refine le_trans (Finset.sum_le_sum fun j hj => ?_) j_decomposition
+  rw [Finset.mem_Icc] at hj
+  exact per_j_bound hn (by omega)
+
 end BinomialThresholds
