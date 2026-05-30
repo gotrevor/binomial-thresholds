@@ -14,8 +14,46 @@ import BinomialThresholds.Decomposition
 import BinomialThresholds.ChebyshevLower
 
 open Finset
+open scoped Topology
 
 namespace BinomialThresholds
+
+/-- **Sqrt smallness (3d error control).** `2√x·log x ≤ x/100` eventually. The `√x·log x`
+correction in `theta_ge` is `o(x)`; this packages exactly the bound needed to absorb it.
+From `isLittleO_log_rpow_atTop` (`log =o x^{1/2}`) with `c = 1/200`. -/
+theorem eventually_two_sqrt_log_le :
+    ∀ᶠ x : ℝ in Filter.atTop, 2 * Real.sqrt x * Real.log x ≤ x / 100 := by
+  have hlit : Real.log =o[Filter.atTop] fun x : ℝ => x ^ (1 / 2 : ℝ) :=
+    isLittleO_log_rpow_atTop (by norm_num)
+  have hb := Asymptotics.isLittleO_iff.mp hlit (show (0 : ℝ) < 1 / 200 by norm_num)
+  filter_upwards [hb, Filter.eventually_ge_atTop (1 : ℝ)] with x hx hx1
+  have hx0 : 0 ≤ x := by linarith
+  rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg (Real.log_nonneg hx1),
+    abs_of_nonneg (Real.rpow_nonneg hx0 _), ← Real.sqrt_eq_rpow] at hx
+  nlinarith [hx, Real.sqrt_nonneg x, Real.mul_self_sqrt hx0]
+
+/-- **Log smallness (3d error control).** `log x ≤ x/100` eventually, from
+`Real.isLittleO_log_id_atTop`. -/
+theorem eventually_log_le :
+    ∀ᶠ x : ℝ in Filter.atTop, Real.log x ≤ x / 100 := by
+  have hb := Asymptotics.isLittleO_iff.mp Real.isLittleO_log_id_atTop
+    (show (0 : ℝ) < 1 / 100 by norm_num)
+  filter_upwards [hb, Filter.eventually_ge_atTop (1 : ℝ)] with x hx hx1
+  rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg (Real.log_nonneg hx1),
+    abs_of_nonneg (by simp only [id_eq]; linarith : (0 : ℝ) ≤ id x)] at hx
+  simp only [id_eq] at hx; linarith
+
+/-- **Linear Chebyshev lower bound (3d).** `θ(x) ≥ 0.6·x` eventually. Combines the `theta_ge`
+engine (`θ(x) ≥ x·log2 − 2log2 − log x − 2√x·log x`) with the smallness bounds, using
+`log 2 > 0.6931` (`Real.log_two_gt_d9`) to clear the gap `log2 − 0.6 ≈ 0.093`. The relaxed
+coefficient `0.6 < log 2` buys the room to absorb the `o(x)` corrections. -/
+theorem eventually_theta_ge :
+    ∀ᶠ x : ℝ in Filter.atTop, 0.6 * x ≤ Chebyshev.theta x := by
+  filter_upwards [eventually_two_sqrt_log_le, eventually_log_le,
+    Filter.eventually_ge_atTop (2 : ℝ), Filter.eventually_ge_atTop (200 : ℝ)]
+    with x hsq hlg hx2 hx200
+  have ht := theta_ge hx2
+  nlinarith [ht, hsq, hlg, hx200, Real.log_two_gt_d9, Real.log_two_lt_d9]
 
 /-- **The `Tⱼ ↔ θ` bridge (step 3d).** For `0 < j`, the prime set
 `Pⱼ = primesBelow(Y+1).filter (p·j ≤ Y)` equals `{p prime : p ≤ ⌊Y/j⌋}` (the `p ≤ Y`
