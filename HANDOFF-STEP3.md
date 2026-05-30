@@ -135,18 +135,38 @@ theorem j_decomposition {n Y J : ℕ} :
      `theta_ge` at `x = ⌊Y/j⌋`. Mind `⌊Y/j⌋ ≥ 2` requires `j ≤ Y/2`-ish — only the `j` with
      `Pⱼ` nonempty/large matter; small-`x` `j` contribute ≥ 0 and can be dropped.
 
-- **3d — asymptotic assembly.** Pieces 3a/3b/3c are all proven & axiom-clean; 3d glues them.
-  Plug `theta_ge` (via the Tⱼ↔θ bridge) into `sum_aminus1_log_ge`, sum the `j_decomposition`
-  lower bound over `j∈[2,J]`. Set `Y = ⌊C(log n)²⌋`, `C ≈ 16` (the verified relaxed constant —
-  see `HANDOFF.md` scope section for `C > 2/((log2−½)(π²/6−1))`). Choose `Mⱼ = ⌊Y/(j·log n)⌋`
-  (the real/ℕ floor encoding deferred from 3b lives here). Push the leading `(log n)³` term
-  through `∑_{j=2}^J 1/j²`, pick `J` with `C(log2−½)∑_{j≤J}1/j² > 2`, absorb the rest into
-  `o((log n)³)`. `Filter.atTop` / `IsLittleO` bookkeeping — the real grind, now the LAST grind.
-  Isolate each `o(1)` claim as its own lemma.
+- **3d — bridge + aggregation ✅ DONE** (`Asymptotic.lean`, commits `6e7c138` + `8b9a129`).
+  - `T_eq_theta (0<j) : Tⱼ = θ(⌊Y/j⌋)` — the bridge (cleaner than feared: `Nat.floor_natCast`
+    + a `Finset.ext` on the index sets via `Nat.le_div_iff_mul_le`).
+  - `per_j_bound (0<n)(0<j)` — substitutes the bridge into `sum_aminus1_log_ge`, giving
+    `M·θ(⌊Y/j⌋) − log(n+M)·∑_{A<M}A − θ(⌊Y/j⌋) ≤ ∑_{p∈Pⱼ}(aₚ−1)log p` for any `M`.
+  - **`sum_lower_le_aux (Mf : ℕ→ℕ) (0<n)`** — sums `per_j_bound` over `j∈[2,J]` and chains
+    `j_decomposition`. **The entire upper bound is now reduced to ONE inequality:**
+    `2·Y·log n < ∑_{j∈Icc 2 J} [Mf j·θ(⌊Y/j⌋) − log(n+Mf j)·∑_{A<Mf j}A − θ(⌊Y/j⌋)]`.
+    No primes, no `f` — just `θ` and `log`. (Then `f n ≤ Y` via `Upper.f_le_of_aux_sum_gt`.)
 
-- **Final assembly** (`f_le_polylog` in `Basic.lean`): provide `C` (e.g. `17`), show
-  `∀ᶠ n, …`: eventually `Y = ⌊C(log n)²⌋ ≤ n` (since `(log n)² = o(n)`), `0 < n`, `hbig`
-  holds (3a–3d), so `f n ≤ Y ≤ C(log n)²` via `f_le_of_aux_sum_gt` + `Nat.floor_le`.
+- **3d — asymptotic core ⏳ THE LAST GRIND (the only thing left).** Prove that one inequality
+  eventually in `n`. **KEY SIMPLIFICATION (this session): use `J = 2`, a SINGLE term `j=2`.**
+  `Icc 2 2 = {2}`, so no `∑1/j²` tail, no `J` choice — just one term. The leading order of the
+  `j=2` term is `C²(log n)³·(2log2−1)/8`; need `> 2C(log n)³` ⟹ `C > 8/(2log2−1) ≈ 41.4`, so
+  **`C = 42` works.** Plan:
+  - `Y = ⌊42·(log n)²⌋₊`, `M₂ = ⌊(Y : ℝ)/(2·log n)⌋₊` (free choice of cutoff; floor of a real).
+  - `θ(⌊Y/2⌋) ≥ (log2)·⌊Y/2⌋ − r` with `r = 2log2 + log⌊Y/2⌋ + 2√⌊Y/2⌋·log⌊Y/2⌋` (`theta_ge`,
+    needs `⌊Y/2⌋ ≥ 2`). Keep `log2` EXACT — a crude `θ ≥ (log2/2)x` loses the margin (`log2−1<0`).
+  - `M₂ ≥ Y/(2log n) − 1`, `⌊Y/2⌋ ≥ Y/2 − 1`, `Y ≥ 42(log n)² − 1`. Floors via `Nat.floor_le` /
+    `Nat.sub_one_lt_floor` / `Nat.lt_floor_add_one`.
+  - `log(n+M₂)·∑_{A<M₂}A ≤ (log2 + log n)·M₂²/2` (since `M₂ ≤ n` eventually ⟹ `n+M₂ ≤ 2n`;
+    `∑_{A<M}A = M(M−1)/2 ≤ M²/2` via `Finset.sum_range_id`).
+  - Leading term `M₂·(log2)·⌊Y/2⌋ − log n·M₂²/2 ≈ Y²/(8 log n)·(2log2−1)`; the error
+    `M₂·r ≈ O((log n)²·loglog n)` is `o((log n)³)`, dominated for large `n`. The work is making
+    "dominated" rigorous: thread `∀ᶠ n` (i.e. `log n ≥ B` for an explicit `B`), bound each error
+    term by `ε·(main)`. Recommend: prove a clean `analytic_core` lemma with explicit hypotheses
+    `log n ≥ B`, `Y ≤ n`, etc., then discharge them via `eventually` filters in `f_le_polylog`.
+
+- **Final assembly** (`f_le_polylog` in `Basic.lean`): `refine ⟨42, by norm_num, ?_⟩`; eventually
+  `n`: `Y = ⌊42(log n)²⌋₊ ≤ n` (since `(log n)² = o(n)` — `Nat.floor` of a `o(n)` is `≤ n`
+  eventually), `0 < n`, the analytic inequality (⟹ `hbig` via `sum_lower_le_aux` +
+  `f_le_of_aux_sum_gt`), so `f n ≤ Y ≤ 42(log n)²` via `Nat.floor_le`.
 
 ---
 

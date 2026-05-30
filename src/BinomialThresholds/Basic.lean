@@ -38,13 +38,13 @@ The paper's *sharp* constants (`24/(π²−6)`, `1/2`) come from
 
 We deliberately formalize the **constant-relaxed** statements:
   `f n = O((log n)²)`  and  `f n = Ω(log n)` infinitely often.
-These need only the *elementary* Chebyshev bounds, which mathlib HAS in
-`Mathlib.NumberTheory.Chebyshev`:
-  • `Chebyshev.theta_eq_sum_primesLE_log` : `θ x = ∑_{p ≤ x} log p`  (the paper's `Tⱼ`)
-  • `Chebyshev.theta_le_log4_mul_x`        : `θ x ≤ log 4 · x`        (upper)
-  • `Chebyshev.two_pow_le_mul_lcmUpto`     : `2^n ≤ (n+1)·lcmUpto n`  (lower-bound engine)
-  • `Chebyshev.psi_le_const_mul_self`, `Chebyshev.abs_psi_sub_theta_le_sqrt_mul_log`
-So the relaxed result is provable unconditionally on plain mathlib v4.29.1.
+These need only the *elementary* Chebyshev bounds. mathlib v4.29.1 ships the
+relevant *upper* bounds (`Chebyshev.theta_le_log4_mul_x`,
+`Chebyshev.psi_le_const_mul_self`, `Chebyshev.abs_psi_sub_theta_le_sqrt_mul_log`)
+but, as of this formalization, **no θ/ψ lower bound** — so the matching lower
+bound `θ(2n) ≥ 2n·log2 − o(n)` is built from central binomials in
+`BinomialThresholds.ChebyshevLower` (`theta_ge`). With that, the relaxed result
+is provable unconditionally on plain mathlib v4.29.1.
 -/
 
 /-- `u n k = ∏_{p ≤ k, p prime} p ^ v_p( C(n,k) )`. -/
