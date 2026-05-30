@@ -55,6 +55,31 @@ theorem eventually_theta_ge :
   have ht := theta_ge hx2
   nlinarith [ht, hsq, hlg, hx200, Real.log_two_gt_d9, Real.log_two_lt_d9]
 
+/-- Gauss-sum bound: `∑_{A<M} A ≤ M²/2`. -/
+theorem sum_range_le_half_sq (M : ℕ) :
+    ∑ A ∈ Finset.range M, (A : ℝ) ≤ (M : ℝ) ^ 2 / 2 := by
+  have h : (∑ i ∈ Finset.range M, i) * 2 = M * (M - 1) := Finset.sum_range_id_mul_two M
+  have h2 : (∑ A ∈ Finset.range M, (A : ℝ)) * 2 = ((M * (M - 1) : ℕ) : ℝ) := by
+    rw [← Nat.cast_sum]; exact_mod_cast h
+  have h3 : ((M * (M - 1) : ℕ) : ℝ) ≤ (M : ℝ) ^ 2 := by
+    calc ((M * (M - 1) : ℕ) : ℝ) ≤ ((M * M : ℕ) : ℝ) := by
+          exact_mod_cast Nat.mul_le_mul (le_refl M) (Nat.sub_le M 1)
+      _ = (M : ℝ) ^ 2 := by push_cast; ring
+  linarith
+
+/-- `(log x)² = o(x)`: concretely `200·(log x)² ≤ x` eventually. Needed for `Y ≤ n` and
+`Mⱼ ≤ n` (so `log(n+Mⱼ) ≤ log n + 1`). From `log =o x^{1/2}` with `c = 1/15`. -/
+theorem eventually_poly_log_le :
+    ∀ᶠ x : ℝ in Filter.atTop, 200 * (Real.log x) ^ 2 ≤ x := by
+  have hlit : Real.log =o[Filter.atTop] fun x : ℝ => x ^ (1 / 2 : ℝ) :=
+    isLittleO_log_rpow_atTop (by norm_num)
+  have hb := Asymptotics.isLittleO_iff.mp hlit (show (0 : ℝ) < 1 / 15 by norm_num)
+  filter_upwards [hb, Filter.eventually_ge_atTop (1 : ℝ)] with x hx hx1
+  have hx0 : 0 ≤ x := by linarith
+  rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg (Real.log_nonneg hx1),
+    abs_of_nonneg (Real.rpow_nonneg hx0 _), ← Real.sqrt_eq_rpow] at hx
+  nlinarith [hx, Real.log_nonneg hx1, Real.sqrt_nonneg x, Real.mul_self_sqrt hx0]
+
 /-- **The `Tⱼ ↔ θ` bridge (step 3d).** For `0 < j`, the prime set
 `Pⱼ = primesBelow(Y+1).filter (p·j ≤ Y)` equals `{p prime : p ≤ ⌊Y/j⌋}` (the `p ≤ Y`
 cap is non-binding since `⌊Y/j⌋ ≤ Y`), so `Tⱼ = ∑_{p∈Pⱼ} log p = θ(⌊Y/j⌋)`. This lets the
