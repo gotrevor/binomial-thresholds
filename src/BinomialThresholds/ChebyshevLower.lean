@@ -87,4 +87,28 @@ theorem theta_lower {n : ℕ} (hn : 0 < n) :
     le_trans (le_abs_self _) (Chebyshev.abs_psi_sub_theta_le_sqrt_mul_log hx)
   linarith [two_mul_log_two_le_psi hn]
 
+/-- **Chebyshev θ lower bound at a general real argument (step 3c, reusable engine).**
+For `x ≥ 2`, `θ(x) ≥ x·log2 - 2·log2 - log x - 2·√x·log x`. Lifts the even-integer
+`theta_lower` to all `x` via monotonicity of `θ` and `2⌊x/2⌋ ∈ [x-2, x]`. The main term
+is `x·log2` (relaxed Chebyshev constant `log 2`); the rest is `o(x)`. This is the form
+the step-3d averaging consumes (with `x = ⌊Y/j⌋`, since `Tⱼ = θ(⌊Y/j⌋)`). -/
+theorem theta_ge {x : ℝ} (hx : 2 ≤ x) :
+    x * Real.log 2 - 2 * Real.log 2 - Real.log x - 2 * Real.sqrt x * Real.log x
+      ≤ Chebyshev.theta x := by
+  set m := ⌊x / 2⌋₊ with hm
+  have hm1 : 1 ≤ m := Nat.le_floor (by exact_mod_cast (by linarith : (1 : ℝ) ≤ x / 2))
+  have hmpos : 0 < m := hm1
+  have h2m_le : 2 * (m : ℝ) ≤ x := by
+    have := Nat.floor_le (show (0 : ℝ) ≤ x / 2 by linarith); rw [← hm] at this; linarith
+  have hx_le : x ≤ 2 * (m : ℝ) + 2 := by
+    have := Nat.lt_floor_add_one (x / 2); rw [← hm] at this; linarith
+  have h2m1 : (1 : ℝ) ≤ 2 * (m : ℝ) := by exact_mod_cast (by omega : 1 ≤ 2 * m)
+  have hlog2 : 0 ≤ Real.log 2 := Real.log_nonneg (by norm_num)
+  have hlogm : Real.log (2 * (m : ℝ)) ≤ Real.log x := Real.log_le_log (by linarith) h2m_le
+  -- product √·log is monotone & nonneg, so the √x·log x correction dominates.
+  have hprod : Real.sqrt (2 * (m : ℝ)) * Real.log (2 * (m : ℝ)) ≤ Real.sqrt x * Real.log x :=
+    mul_le_mul (Real.sqrt_le_sqrt h2m_le) hlogm (Real.log_nonneg h2m1) (Real.sqrt_nonneg x)
+  nlinarith [theta_lower hmpos, Chebyshev.theta_mono h2m_le, hprod, hlogm, hlog2,
+    mul_nonneg (show (0 : ℝ) ≤ 2 * (m : ℝ) + 2 - x by linarith) hlog2]
+
 end BinomialThresholds
