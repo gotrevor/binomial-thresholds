@@ -13,8 +13,8 @@ prime factors of `C(n, k)` (erdosproblems.com/684).
 -/
 import Mathlib
 
-open Filter Finset
-open scoped BigOperators Topology
+open Finset
+open scoped BigOperators
 
 namespace BinomialThresholds
 
@@ -61,11 +61,10 @@ Sharp constant `24/(π²−6)` would need PNT; this needs only Chebyshev. Proved
 `BinomialThresholds.Asymptotic` as `f_le_polylog` (it needs the full §2 machinery,
 which imports this file). -/
 
-/-- **Lower bound** (constant-relaxed): `f n ≥ c · log n` infinitely often.
-Paper gives `(1/2 + o(1)) log nⱼ`; we relax to some `c > 0`.
-Witness family: `n = (∏_{p ≤ K} p^{⌊log_p K⌋+1}) − 1`. -/
-theorem f_ge_log_frequently :
-    ∃ c : ℝ, 0 < c ∧ ∃ᶠ n : ℕ in atTop, c * Real.log n ≤ (f n : ℝ) := by
-  sorry
+/- **Lower bound** (constant-relaxed): `f n ≥ c · log n` infinitely often. Paper gives
+`(1/2 + o(1)) log nⱼ`; we relax to some `c > 0`. Witness family
+`n = (∏_{p ≤ K} p^{⌊log_p K⌋+1}) − 1`. Proved in `BinomialThresholds.Lower` as
+`f_ge_log_frequently` (it needs the Legendre carry-free atom + the Chebyshev `O(K)` bound,
+which import this file). -/
 
 end BinomialThresholds
