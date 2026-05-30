@@ -5,8 +5,8 @@ Released under Apache 2.0 license.
 Assembly of the upper bound `f n = O((log n)²)` (arXiv:2603.29961 §2), built on
 the three concrete cores: `Legendre`, `CrucialObs`, `BlockCount`.
 
-This file currently holds the per-`k` bridge from the Legendre indicator to
-`log (u n k)`. The remaining averaging/Chebyshev assembly is in progress.
+Steps 1-2 and the averaging are done: `f_le_of_aux_sum_gt` reduces the whole upper
+bound to one analytic inequality (`hbig`), which the Chebyshev step (step 3) must supply.
 -/
 import BinomialThresholds.Basic
 import BinomialThresholds.Legendre
@@ -139,5 +139,38 @@ theorem sum_aux_le_sum_log_u {n Y : ℕ} (hYn : Y ≤ n) :
       = (((p - 1 - n % p) * (Y / p - 1) : ℕ) : ℝ) * Real.log p := by push_cast; ring
     _ ≤ ((#{k ∈ Finset.Icc 1 Y | p ≤ k ∧ n % p < k % p} : ℕ) : ℝ) * Real.log p :=
         mul_le_mul_of_nonneg_right (by exact_mod_cast card_Icc_ge hpp.pos) hlog
+
+/-- **Averaging + connect to `f`.** If the step-2 lower sum exceeds `2 Y log n`, then
+some `k ∈ [1,Y]` has `log(u n k) > 2 log n = log(n²)`, i.e. `u(n,k) > n²`, so `f n ≤ Y`.
+This reduces the whole upper bound to the single analytic inequality `hbig` (which the
+Chebyshev step supplies). Needs only `Y ≤ n`. -/
+theorem f_le_of_aux_sum_gt {n Y : ℕ} (hYn : Y ≤ n)
+    (hbig : (2 : ℝ) * Y * Real.log n
+      < ∑ p ∈ Nat.primesBelow (Y + 1),
+          ((p - 1 - n % p : ℕ) : ℝ) * ((Y / p - 1 : ℕ) : ℝ) * Real.log p) :
+    f n ≤ Y := by
+  have h2 : (2 : ℝ) * Y * Real.log n < ∑ k ∈ Finset.Icc 1 Y, Real.log (u n k) :=
+    lt_of_lt_of_le hbig (sum_aux_le_sum_log_u hYn)
+  -- averaging: some k beats the mean `2 log n`.
+  have hexists : ∃ k ∈ Finset.Icc 1 Y, 2 * Real.log n < Real.log (u n k) := by
+    by_contra hcon
+    push Not at hcon
+    have hsum := Finset.sum_le_card_nsmul _ _ _ hcon
+    rw [Nat.card_Icc, Nat.add_sub_cancel, nsmul_eq_mul] at hsum
+    nlinarith [h2, hsum]
+  obtain ⟨k, hk, hlog⟩ := hexists
+  rw [Finset.mem_Icc] at hk
+  have hu_pos : 0 < u n k := by
+    unfold u
+    exact Finset.prod_pos fun p hp => pow_pos (Nat.prime_of_mem_primesBelow hp).pos _
+  have hkey : n ^ 2 < u n k := by
+    have hcast : (2 : ℝ) * Real.log n = Real.log ((n ^ 2 : ℕ) : ℝ) := by
+      rw [Nat.cast_pow, Real.log_pow]; push_cast; ring
+    rw [hcast] at hlog
+    by_contra hc
+    push Not at hc
+    exact absurd (Real.log_le_log (by exact_mod_cast hu_pos) (by exact_mod_cast hc))
+      (not_le.mpr hlog)
+  exact le_trans (Nat.sInf_le hkey) hk.2
 
 end BinomialThresholds
