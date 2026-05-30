@@ -57,4 +57,18 @@ so the witness `k` (with `n²<u n k`) is *exposed* (`Upper.exists_threshold_le`,
 ## Push status
 
 Local commits on `master`, **not pushed** (box has no GitHub egress). Host-side `git push`.
-Relevant commits: `5e9eb6f` (refactor), `517546f` (lower bound complete).
+Relevant commits: `5e9eb6f` (refactor), `517546f` (lower bound complete), `b9a6a8e` (handoff).
+
+## Now-actionable: record #684 as formalized (host-side, both cloned locally)
+
+The proof is done, so these two tracker PRs are now live next-steps. The proof lives in
+**this repo**; trackers just point at it.
+- **formal-conjectures** (`~/src/formal-conjectures`, DeepMind statement DB): #684 has no
+  file → add `FormalConjectures/ErdosProblems/684.lean` with the faithful statement,
+  `@[category research open]` (684 asks for the *exact order*; constant-relaxed bounds don't
+  resolve it), and `@[formal_proof using lean4 at "<repo URL>"]`. Body stays `sorry` there by
+  design (see their #728.lean pattern).
+- **teorth/erdosproblems** (`~/src/erdosproblems`, `data/problems.yaml`): flip
+  `formalized: no → yes`; `status` stays `open`.
+- ⚠️ Note when PRing: ours is the **constant-relaxed** (`O((log n)²)` / `Ω(log n) i.o.`)
+  result, not the sharp `24/(π²−6)` / `1/2` constants (those need PNT). Be honest about scope.
