@@ -10,6 +10,7 @@ Mechanism: `aₚ = ∑_{A≥0} 1[aₚ > A]`, so `∑ aₚ log p = ∑_A (T − S
 and `T − S_A ≥ T − A·L`.
 -/
 import Mathlib
+import BinomialThresholds.CrucialObs
 
 open Finset
 
@@ -71,5 +72,25 @@ theorem sum_amul_log_ge (P : Finset ℕ) (n M : ℕ) (L : ℝ)
           ((∑ p ∈ P, Real.log p) - ∑ p ∈ P.filter (fun p => p - n % p ≤ A), Real.log p) :=
         Finset.sum_le_sum fun A hA => by linarith [hS A hA]
     _ ≤ ∑ p ∈ P, ((p - n % p : ℕ) : ℝ) * Real.log p := hlayer
+
+/-- **The `Rⱼ` lower bound** (aggregation + crucial observation). Feeding the crucial
+observation `sum_log_le_of_a_le` (with the uniform bound `log(n+A) ≤ log(n+M)`) into
+`sum_amul_log_ge`: for a prime set `P` and `0 < n`,
+`M·T − log(n+M)·∑_{A<M} A ≤ ∑_{p∈P} aₚ·log p`. -/
+theorem R_lower (P : Finset ℕ) (n M : ℕ) (hn : 0 < n) (hP : ∀ p ∈ P, p.Prime) :
+    (M : ℝ) * (∑ p ∈ P, Real.log p)
+        - Real.log ((n : ℝ) + M) * (∑ A ∈ Finset.range M, (A : ℝ))
+      ≤ ∑ p ∈ P, ((p - n % p : ℕ) : ℝ) * Real.log p := by
+  refine sum_amul_log_ge P n M (Real.log ((n : ℝ) + M)) hP fun A hA => ?_
+  rw [Finset.mem_range] at hA
+  have hSp : ∀ p ∈ P.filter (fun p => p - n % p ≤ A), p.Prime :=
+    fun p hp => hP p (Finset.mem_of_mem_filter _ hp)
+  have hSa : ∀ p ∈ P.filter (fun p => p - n % p ≤ A), p - n % p ≤ A :=
+    fun p hp => (Finset.mem_filter.mp hp).2
+  refine (sum_log_le_of_a_le hSp hSa).trans ?_
+  refine mul_le_mul_of_nonneg_left ?_ (Nat.cast_nonneg A)
+  refine Real.log_le_log (by exact_mod_cast Nat.add_pos_left hn A) ?_
+  have : (A : ℝ) ≤ M := by exact_mod_cast hA.le
+  linarith
 
 end BinomialThresholds
