@@ -56,11 +56,10 @@ of `f_le_polylog` below also certifies the witnessing set is eventually
 nonempty.) -/
 noncomputable def f (n : ℕ) : ℕ := sInf {k | n ^ 2 < u n k}
 
-/-- **Upper bound** (constant-relaxed Theorem 2.1): `f n = O((log n)²)`.
-Sharp constant `24/(π²−6)` would need PNT; this needs only Chebyshev. -/
-theorem f_le_polylog :
-    ∃ C : ℝ, 0 < C ∧ ∀ᶠ n : ℕ in atTop, (f n : ℝ) ≤ C * (Real.log n) ^ 2 := by
-  sorry
+/- **Upper bound** (constant-relaxed Theorem 2.1): `f n = O((log n)²)`.
+Sharp constant `24/(π²−6)` would need PNT; this needs only Chebyshev. Proved in
+`BinomialThresholds.Asymptotic` as `f_le_polylog` (it needs the full §2 machinery,
+which imports this file). -/
 
 /-- **Lower bound** (constant-relaxed): `f n ≥ c · log n` infinitely often.
 Paper gives `(1/2 + o(1)) log nⱼ`; we relax to some `c > 0`.
