@@ -1,7 +1,20 @@
 # HANDOFF — binomial-thresholds formalization
 
 **Repo**: `~/src/binomial-thresholds/` · **Started**: 2026-05-30 · **mathlib**: v4.29.1
-**Build**: green — `Basic` (2 expected `sorry`s) + `Legendre` (0 `sorry`, axiom-clean).
+**Build**: green. `Basic` (2 headline `sorry`s — the two theorems) + four axiom-clean
+support modules: `Legendre`, `CrucialObs`, `BlockCount`, `Upper`. Git on `master`,
+commit when green (no remote yet).
+
+## Module map (all axiom-clean unless noted)
+
+- `Legendre.lean` — `vₚ(C(n,k)) ≥ 1[n%p<k%p]` and the `=0` no-carry companion.
+- `CrucialObs.lean` — `prod_primes_dvd_prod_shift` (primes with `aₚ≤A` divide `∏_{m≤A}(n+m)`)
+  and its log form `sum_log_le_of_a_le : ∑_{S} log p ≤ A·log(n+A)`.
+- `BlockCount.lean` — `card_filter_mod_gt : (p-1-t)·(Y/p) ≤ #{k<Y : k%p>t}` (residue
+  equidistribution via `Nat.count_modEq_card`). Sharper than the paper's `⌊Y/p⌋-1`.
+- `Upper.lean` — assembly in progress. Has `log_u_eq` (unfold `log(u n k)`) and
+  `indicator_sum_le_log_u (k≤n) : ∑_{p≤k, n%p<k%p} log p ≤ log(u n k)`.
+- `Basic.lean` — objects `u`, `f`; the two `sorry` headline theorems.
 
 ## TL;DR state
 
@@ -105,10 +118,18 @@ this project was chosen to avoid. Sharp constants = optional hard-mode only.
    (carries = `#{i ∈ Ico 1 b | pⁱ ≤ k%pⁱ + (n−k)%pⁱ}`). The `1_{n mod p < k mod p}`
    indicator is the `i=1` term; lower bound = "that term is in the set", zero = "no
    term is". Shared digit-carry iff is `m_le_mod_add_mod_iff`.
-2. **Sum over k**: `∑_{k=1}^Y log(u(n,k)) ≥ ∑_{p≤Y}(⌊Y/p⌋−1)(aₚ−1)log p` where
-   `aₚ = p − (n mod p)`; recognize the prime sums via `theta_eq_sum_primesLE_log`.
-3. **Pigeonhole / averaging**: with `Y = ⌊C(log n)²⌋`, at least one `k ≤ Y` has
-   `u(n,k) > n²`, so `f n ≤ Y`. Relaxed `C` from `theta_le_log4_mul_x`, not θ~x.
+2. **Sum over k** — ingredients ✅ DONE, assembly ⏳ NEXT. The three pieces exist:
+   `indicator_sum_le_log_u` (per-k, `Upper`), `card_filter_mod_gt` (`BlockCount`),
+   `sum_log_le_of_a_le` (`CrucialObs`). What remains is the **double-sum swap** (Fubini):
+   `∑_{k=1}^Y log(u(n,k)) ≥ ∑_{k} ∑_{p≤k} 1[n%p<k%p] log p = ∑_{p≤Y} log p · #{k∈[p,Y] : n%p<k%p}`,
+   then plug `card_filter_mod_gt` to get `≥ ∑_{p≤Y}(aₚ−1)(Y/p)log p` (minus the bounded
+   `k<p` correction). ⚠️ swap gotcha: `card_filter_mod_gt` counts `k∈[0,Y)` but the inner
+   sum is `p≤k≤Y`; the `k<p` terms are few (`< p ≤ Y`) and droppable since `aₚ−1 ≥ 0`.
+3. **Pigeonhole / averaging** ⏳ — with `Y = ⌊C(log n)²⌋`, average `∑log u / Y > 2log n`,
+   so some `k ≤ Y` has `u(n,k) > n²`, giving `f n ≤ Y`. This is where the **Chebyshev**
+   `θ` bounds enter (`theta_eq_sum_primesLE_log`, `theta_le_log4_mul_x`) and the relaxed
+   `C ≈ 16` is fixed (see the verified scope-decision section above). Heaviest remaining
+   chunk: the `o(1)` bookkeeping, the `∑_{j} 1/j²` tail, and choosing `J`.
 
 `f_ge_log_frequently`: witness `n = (∏_{p≤K} p^{⌊log_p K⌋+1}) − 1`; for `k≤K`,
 `n mod pᵃ ≥ k mod pᵃ` ⟹ `vₚ(C(n,k))=0` for all `p≤K` ⟹ `u(n,k)=1 ≤ n²`, so
