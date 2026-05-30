@@ -110,33 +110,39 @@ theorem j_decomposition {n Y J : ℕ} :
   plus the prime cast identity `(p−1−n%p) = (p−n%p)−1`. Left `M` general — the `Mⱼ` choice
   (`⌊Y/(j·log n)⌋` encoding) is deferred to 3d, where the real/ℕ floor mess lives.
 
-- **3c — Chebyshev LOWER bound on `Tⱼ`. ⚠️ BIGGER THAN ADVERTISED — the handoff was wrong.**
-  Need `Tⱼ = θ(Y/j) ≥ (log2)(Y/j) − err`. **mathlib v4.29.1 ships NO Chebyshev lower bound.**
-  The `Chebyshev.two_pow_le_mul_lcmUpto` lemma cited in older notes **does not exist** (no
-  `lcmUpto` anywhere); `Chebyshev.theta_eq_sum_primesLE_log` also absent. Only *upper* bounds
-  ship: `theta_le_log4_mul_x`, `psi_le_const_mul_self`, `primorial_le_four_pow`. **You must
-  BUILD the lower bound.** The atoms ARE all present (verified this session), so it's feasible,
-  just substantial (~the heaviest single piece of the project). The chain:
-  1. **(B, easy)** `four_pow_le_two_mul_self_mul_centralBinom n (0<n) : 4^n ≤ 2n·centralBinom n`.
-     Take logs ⟹ `2n·log2 − log(2n) ≤ log(centralBinom n)` (`log 4 = 2 log 2`, `log_pow`).
-  2. **(A, the hard part)** `log(centralBinom n) ≤ ψ(2n)`. centralBinom's prime factorization
-     `∏_{p} p^{vₚ}` has `p^{vₚ} ≤ 2n` (`pow_factorization_choose_le`, n→2n k→n) and support
-     `p ≤ 2n` (`le_two_mul_of_factorization_centralBinom_pos`). So
-     `log centralBinom = ∑_p vₚ log p = ∑_p ∑_{j=1}^{vₚ} Λ(pʲ) ≤ ∑_{m≤2n} Λ(m) = ψ(2n)`
-     (reindex the injective `(p,j)↦pʲ` into `[1,2n]`; complement von-Mangoldt terms ≥ 0).
-     This is the fiddly reindex — `Finset.sum_image`/`sum_biUnion`, `vonMangoldt_apply`.
-     ψ def + `psi_eq_sum_Icc` in `Mathlib/NumberTheory/Chebyshev.lean`.
-  3. **θ from ψ**: `θ(x) ≥ ψ(x) − 2√x·log x` via `abs_psi_sub_theta_le_sqrt_mul_log (1≤x)`.
-     Net: `θ(x) ≥ (log2)·x − log x − 2√x log x` for `x = 2n` (the `√x log x` is `o(x)`).
-  ⚠️ still reconcile `primesLE` (θ's index) vs `primesBelow (m+1)` (our `Pⱼ`) — a `≤ m` ↔
-     `< m+1` rename, likely a one-liner once you pin θ's actual summation form here.
+- **3c — Chebyshev LOWER bound. ✅ DONE** (`ChebyshevLower.lean`, commits `3374bbb` + `562c054`).
+  Had to BUILD it — mathlib v4.29.1 ships no θ/ψ lower bound (the old `two_pow_le_mul_lcmUpto`
+  pointer was fiction; `lcmUpto` doesn't exist). Built from central binomials instead, all
+  axiom-clean. Reusable lemmas now available:
+  - `log_centralBinom_le_psi (0<n) : log C(2n,n) ≤ ψ(2n)` — the von Mangoldt half. Used the
+    divisor identity `ArithmeticFunction.vonMangoldt_sum : ∑_{d∣N} Λ d = log N`, dropped
+    non-prime-power terms (`Finset.sum_filter_of_ne` + `vonMangoldt_apply`), and bounded each
+    prime-power divisor `pᵏ ∣ C(2n,n)` by `2n` (`Nat.Prime.pow_dvd_iff_le_factorization` ⟹
+    `k ≤ vₚ`, then `Nat.pow_factorization_choose_le`). MUCH cleaner than the anticipated
+    `(p,j)↦pʲ` reindex — the divisor identity did the reindexing for free.
+  - `two_mul_log_two_le_psi (0<n) : 2n·log2 − log(2n) ≤ ψ(2n)` — from `4ⁿ ≤ 2n·C(2n,n)`.
+  - `theta_lower (0<n) : 2n·log2 − log(2n) − 2√(2n)·log(2n) ≤ θ(2n)` — ψ→θ via
+    `Chebyshev.abs_psi_sub_theta_le_sqrt_mul_log`.
+  - **`theta_ge (hx : 2 ≤ x) : x·log2 − 2·log2 − log x − 2·√x·log x ≤ θ x`** — the general-x
+    engine 3d consumes. Lifts `theta_lower` to all reals via `Chebyshev.theta_mono` +
+    `2⌊x/2⌋ ∈ [x−2, x]`. **This is the one to feed step 3d.**
+  ⚠️ NOTE θ here is `Chebyshev.theta x = ∑_{p ∈ Ioc 0 ⌊x⌋₊ with p.Prime} log p`. Still need the
+     **`Tⱼ ↔ θ` bridge** (first 3d sub-task): `Tⱼ = ∑_{p∈Pⱼ} log p` with
+     `Pⱼ = primesBelow(Y+1).filter (p·j≤Y)`. Since `p·j≤Y ⟺ p ≤ ⌊Y/j⌋` (`Nat.le_div_iff_mul_le`,
+     and `⌊Y/j⌋ ≤ Y` so the `primesBelow(Y+1)` cap is non-binding), `Pⱼ = {p prime, p ≤ ⌊Y/j⌋}`,
+     hence `Tⱼ = θ(⌊Y/j⌋)`. Prove `∑_{p∈Pⱼ} log p = Chebyshev.theta (⌊Y/j⌋ : ℝ)` by matching
+     index sets (`Ioc 0 ⌊x⌋₊` vs `primesBelow`; `Nat.floor_natCast` kills the floor), then apply
+     `theta_ge` at `x = ⌊Y/j⌋`. Mind `⌊Y/j⌋ ≥ 2` requires `j ≤ Y/2`-ish — only the `j` with
+     `Pⱼ` nonempty/large matter; small-`x` `j` contribute ≥ 0 and can be dropped.
 
-- **3d — asymptotic assembly.** Set `Y = ⌊C(log n)²⌋`, `C ≈ 16` (the verified relaxed
-  constant — see `HANDOFF.md` scope section for the exact `C > 2/((log2−½)(π²/6−1))`
-  derivation). Push the leading `(log n)³` term through `∑_{j=2}^J 1/j²`, choose `J` large
-  enough that `C(log2−½)∑_{j≤J}1/j² > 2`, and absorb everything else into `o((log n)³)`.
-  This is `Filter.atTop` / `IsLittleO` bookkeeping — the real grind. Expect this to be the
-  bulk of the remaining effort; consider isolating each `o(1)` claim as its own lemma.
+- **3d — asymptotic assembly.** Pieces 3a/3b/3c are all proven & axiom-clean; 3d glues them.
+  Plug `theta_ge` (via the Tⱼ↔θ bridge) into `sum_aminus1_log_ge`, sum the `j_decomposition`
+  lower bound over `j∈[2,J]`. Set `Y = ⌊C(log n)²⌋`, `C ≈ 16` (the verified relaxed constant —
+  see `HANDOFF.md` scope section for `C > 2/((log2−½)(π²/6−1))`). Choose `Mⱼ = ⌊Y/(j·log n)⌋`
+  (the real/ℕ floor encoding deferred from 3b lives here). Push the leading `(log n)³` term
+  through `∑_{j=2}^J 1/j²`, pick `J` with `C(log2−½)∑_{j≤J}1/j² > 2`, absorb the rest into
+  `o((log n)³)`. `Filter.atTop` / `IsLittleO` bookkeeping — the real grind, now the LAST grind.
+  Isolate each `o(1)` claim as its own lemma.
 
 - **Final assembly** (`f_le_polylog` in `Basic.lean`): provide `C` (e.g. `17`), show
   `∀ᶠ n, …`: eventually `Y = ⌊C(log n)²⌋ ≤ n` (since `(log n)² = o(n)`), `0 < n`, `hbig`
