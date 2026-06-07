@@ -2,6 +2,7 @@ name = "BinomialThresholds"
 version = "0.1.0"
 keywords = ["math", "number-theory", "binomial-coefficients", "erdos"]
 srcDir = "src"
+defaultTargets = ["BinomialThresholds"]
 
 [[require]]
 name = "mathlib"
