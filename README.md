@@ -54,3 +54,7 @@ Two trackers, neither hosts the proof (it lives here):
   proven add `@[formal_proof using lean4 at "<this repo URL>"]`.
 - **teorth/erdosproblems** (`data/problems.yaml`): PR flipping `formalized:
   no → yes`. `status` stays `open`.
+
+## License
+
+[Apache License 2.0](LICENSE), Copyright 2026 Trevor Morris
