@@ -1,7 +1,9 @@
 /-
-Copyright (c) 2026. Trevor Morris.
-Released under Apache 2.0 license.
-
+Copyright (c) 2026 Trevor Morris. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Trevor Morris
+-/
+/-
 Step 3a of the upper bound (arXiv:2603.29961 §2): the **j-decomposition**. The single
 `(aₚ-1)·(⌊Y/p⌋-1)·log p` weight in the averaging sum is bounded below by a sum over
 `j ∈ [2,J]` of contributions from the prime sets `Pⱼ = {p ≤ Y : p·j ≤ Y}`, using

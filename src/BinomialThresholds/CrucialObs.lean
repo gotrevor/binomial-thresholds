@@ -1,7 +1,9 @@
 /-
-Copyright (c) 2026. Trevor Morris.
-Released under Apache 2.0 license.
-
+Copyright (c) 2026 Trevor Morris. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Trevor Morris
+-/
+/-
 The "crucial observation" of arXiv:2603.29961 §2 (upper bound). For a prime `p`,
 write `aₚ = p - (n mod p)` (the distance from `n` up to the next multiple of `p`).
 If `aₚ ≤ A` then `p` divides one of `n+1, …, n+A`. Consequently a *set* of distinct

@@ -1,7 +1,9 @@
 /-
-Copyright (c) 2026. Trevor Morris.
-Released under Apache 2.0 license.
-
+Copyright (c) 2026 Trevor Morris. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Trevor Morris
+-/
+/-
 The **lower bound** (constant-relaxed): `f n ≥ c · log n` infinitely often
 (arXiv:2603.29961 §2). Witness family `n = M_K − 1` where
 

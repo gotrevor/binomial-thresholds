@@ -1,7 +1,9 @@
 /-
-Copyright (c) 2026. Trevor Morris.
-Released under Apache 2.0 license.
-
+Copyright (c) 2026 Trevor Morris. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Trevor Morris
+-/
+/-
 Formalization of the binomial-coefficient threshold result, Section 2 of
 
   Alexeev, Putterman, Sawhney, Sellke, Valiant,

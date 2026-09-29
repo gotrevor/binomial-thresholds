@@ -1,7 +1,9 @@
 /-
-Copyright (c) 2026. Trevor Morris.
-Released under Apache 2.0 license.
-
+Copyright (c) 2026 Trevor Morris. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Trevor Morris
+-/
+/-
 The layer-cake aggregation at the heart of the upper-bound averaging (step 3 of
 arXiv:2603.29961 §2). Given the crucial-observation bound `S_A ≤ A·L` (few primes
 have `aₚ ≤ A`), the "energy" `∑_{p∈P} aₚ log p` is bounded below by `M·T − L·∑_{A<M} A`.

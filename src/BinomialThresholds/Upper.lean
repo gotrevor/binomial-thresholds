@@ -1,7 +1,9 @@
 /-
-Copyright (c) 2026. Trevor Morris.
-Released under Apache 2.0 license.
-
+Copyright (c) 2026 Trevor Morris. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Trevor Morris
+-/
+/-
 Assembly of the upper bound `f n = O((log n)²)` (arXiv:2603.29961 §2), built on
 the three concrete cores: `Legendre`, `CrucialObs`, `BlockCount`.
 

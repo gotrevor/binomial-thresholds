@@ -1,7 +1,9 @@
 /-
-Copyright (c) 2026. Trevor Morris.
-Released under Apache 2.0 license.
-
+Copyright (c) 2026 Trevor Morris. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Trevor Morris
+-/
+/-
 The Legendre / Kummer building block for the binomial-threshold proof:
 
   `v_p( C(n,k) ) ≥ 1[ n mod p < k mod p ]`.

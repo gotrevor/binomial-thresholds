@@ -1,7 +1,9 @@
 /-
-Copyright (c) 2026. Trevor Morris.
-Released under Apache 2.0 license.
-
+Copyright (c) 2026 Trevor Morris. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Trevor Morris
+-/
+/-
 The block-counting lower bound for the upper-bound argument (arXiv:2603.29961 §2).
 
 As `k` ranges over `[0, Y)`, the residue `k mod p` hits each class roughly `Y/p`

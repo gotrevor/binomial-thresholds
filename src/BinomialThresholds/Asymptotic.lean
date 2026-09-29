@@ -1,7 +1,9 @@
 /-
-Copyright (c) 2026. Trevor Morris.
-Released under Apache 2.0 license.
-
+Copyright (c) 2026 Trevor Morris. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Trevor Morris
+-/
+/-
 Step 3d of the upper bound (arXiv:2603.29961 §2): the asymptotic assembly. Glues the
 proven ingredients — `j_decomposition` (3a), `sum_aminus1_log_ge` (3b), `theta_ge` (3c) —
 into the `hbig` inequality of `Upper.f_le_of_aux_sum_gt`, then chooses `Y`, `Mⱼ`, `J`.

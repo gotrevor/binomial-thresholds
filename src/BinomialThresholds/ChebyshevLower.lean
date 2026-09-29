@@ -1,7 +1,9 @@
 /-
-Copyright (c) 2026. Trevor Morris.
-Released under Apache 2.0 license.
-
+Copyright (c) 2026 Trevor Morris. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Trevor Morris
+-/
+/-
 Step 3c of the upper bound (arXiv:2603.29961 §2): a **Chebyshev lower bound** on
 `θ`/`ψ`. mathlib v4.29.1 ships only the *upper* Chebyshev bounds, so we build the lower
 bound from the central binomial coefficient:
